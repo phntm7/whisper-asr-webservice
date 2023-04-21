@@ -62,17 +62,13 @@ faster_whisper_model_path = os.path.join("/root/.cache/faster_whisper", whisper_
 faster_whisper_model_converter(whisper_model_name, faster_whisper_model_path)
 
 if torch.cuda.is_available():
-    whisper_model = whisper.load_model(whisper_model_name).cuda()
     faster_whisper_model = WhisperModel(faster_whisper_model_path, device="cuda", compute_type="float16")
 else:
-    whisper_model = whisper.load_model(whisper_model_name)
     faster_whisper_model = WhisperModel(faster_whisper_model_path)
 model_lock = Lock()
 
-def get_model(method: str = "openai-whisper"):
-    if method == "faster-whisper":
-        return faster_whisper_model
-    return whisper_model
+def get_model():
+    return faster_whisper_model
 
 @app.get("/", response_class=RedirectResponse, include_in_schema=False)
 async def index():
@@ -80,7 +76,6 @@ async def index():
 
 @app.post("/asr", tags=["Endpoints"])
 def transcribe(
-    method: Union[str, None] = Query(default="openai-whisper", enum=["openai-whisper", "faster-whisper"]),
     task : Union[str, None] = Query(default="transcribe", enum=["transcribe", "translate"]),
     language: Union[str, None] = Query(default=None, enum=LANGUAGE_CODES),
     initial_prompt: Union[str, None] = Query(default=None),
@@ -89,17 +84,16 @@ def transcribe(
     output : Union[str, None] = Query(default="txt", enum=["txt", "vtt", "srt", "tsv", "json"])
 ):
 
-    result = run_asr(audio_file.file, task, language, initial_prompt, method, encode)
+    result = run_asr(audio_file.file, task, language, initial_prompt, encode)
     filename = audio_file.filename.split('.')[0]
     myFile = StringIO()
-    write_result(result, myFile, output, method)
+    write_result(result, myFile, output)
     myFile.seek(0)
     return StreamingResponse(myFile, media_type="text/plain", headers={'Content-Disposition': f'attachment; filename="{filename}.{output}"'})
 
 @app.post("/detect-language", tags=["Endpoints"])
 def language_detection(
     audio_file: UploadFile = File(...),
-    method: Union[str, None] = Query(default="openai-whisper", enum=["openai-whisper", "faster-whisper"]),
     encode : bool = Query(default=True, description="Encode audio first through ffmpeg")
 ):
     # load audio and pad/trim it to fit 30 seconds
@@ -108,15 +102,9 @@ def language_detection(
 
     # detect the spoken language
     with model_lock:
-        model = get_model(method)
-        if method == "faster-whisper":
-            segments, info = model.transcribe(audio, beam_size=5)
-            detected_lang_code = info.language
-        else:
-            # make log-Mel spectrogram and move to the same device as the model
-            mel = whisper.log_mel_spectrogram(audio).to(model.device)
-            _, probs = model.detect_language(mel)
-            detected_lang_code = max(probs, key=probs.get)
+        model = get_model()
+        segments, info = model.transcribe(audio, beam_size=5)
+        detected_lang_code = info.language
 
         result = { "detected_language": tokenizer.LANGUAGES[detected_lang_code], "language_code" : detected_lang_code }
 
@@ -127,7 +115,6 @@ def run_asr(
     task: Union[str, None], 
     language: Union[str, None],
     initial_prompt: Union[str, None], 
-    method: Union[str, None],
     encode=True
 ):
     audio = load_audio(file, encode)
@@ -137,54 +124,37 @@ def run_asr(
     if initial_prompt:
         options_dict["initial_prompt"] = initial_prompt    
     with model_lock:   
-        model = get_model(method)
-        if method == "faster-whisper":
-            segments = []
-            text = ""
-            i = 0
-            segment_generator, info = model.transcribe(audio, beam_size=5, **options_dict)
-            for segment in segment_generator:
-                segments.append(segment)
-                text = text + segment.text
-            result = {
-                "language": options_dict.get("language", info.language),
-                "segments": segments,
-                "text": text,
-            }
-        else:
-            result = model.transcribe(audio, **options_dict)
+        model = get_model()
+        segments = []
+        text = ""
+        i = 0
+        segment_generator, info = model.transcribe(audio, beam_size=5, **options_dict)
+        for segment in segment_generator:
+            segments.append(segment)
+            text = text + segment.text
+        result = {
+            "language": options_dict.get("language", info.language),
+            "segments": segments,
+            "text": text,
+        }
 
     return result
 
 def write_result(
-    result: dict, file: BinaryIO, output: Union[str, None], method: Union[str, None]
+    result: dict, file: BinaryIO, output: Union[str, None]
 ):
-    if method == "faster-whisper":
-        if(output == "srt"):
-            faster_whisper_WriteSRT(ResultWriter).write_result(result, file = file)
-        elif(output == "vtt"):
-            faster_whisper_WriteVTT(ResultWriter).write_result(result, file = file)
-        elif(output == "tsv"):
-            faster_whisper_WriteTSV(ResultWriter).write_result(result, file = file)
-        elif(output == "json"):
-            faster_whisper_WriteJSON(ResultWriter).write_result(result, file = file)
-        elif(output == "txt"):
-            faster_whisper_WriteTXT(ResultWriter).write_result(result, file = file)
-        else:
-            return 'Please select an output method!'
+    if(output == "srt"):
+        faster_whisper_WriteSRT(ResultWriter).write_result(result, file = file)
+    elif(output == "vtt"):
+        faster_whisper_WriteVTT(ResultWriter).write_result(result, file = file)
+    elif(output == "tsv"):
+        faster_whisper_WriteTSV(ResultWriter).write_result(result, file = file)
+    elif(output == "json"):
+        faster_whisper_WriteJSON(ResultWriter).write_result(result, file = file)
+    elif(output == "txt"):
+        faster_whisper_WriteTXT(ResultWriter).write_result(result, file = file)
     else:
-        if(output == "srt"):
-            WriteSRT(ResultWriter).write_result(result, file = file)
-        elif(output == "vtt"):
-            WriteVTT(ResultWriter).write_result(result, file = file)
-        elif(output == "tsv"):
-            WriteTSV(ResultWriter).write_result(result, file = file)
-        elif(output == "json"):
-            WriteJSON(ResultWriter).write_result(result, file = file)
-        elif(output == "txt"):
-            WriteTXT(ResultWriter).write_result(result, file = file)
-        else:
-            return 'Please select an output method!'
+        return 'Please select an output format!'
 
 def load_audio(file: BinaryIO, encode=True, sr: int = SAMPLE_RATE):
     """
