@@ -26,6 +26,12 @@ RUN python3 -m venv $POETRY_VENV \
 
 ENV PATH="${PATH}:${POETRY_VENV}/bin"
 
+RUN pip config set global.trusted-host \
+        "pypi.org files.pythonhosted.org pypi.python.org" \
+        --trusted-host=pypi.python.org \
+        --trusted-host=pypi.org \
+        --trusted-host=files.pythonhosted.org
+
 WORKDIR /app
 
 # COPY poetry.lock pyproject.toml ./
