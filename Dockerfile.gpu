@@ -31,6 +31,7 @@ RUN pip config set global.trusted-host \
         --trusted-host=pypi.python.org \
         --trusted-host=pypi.org \
         --trusted-host=files.pythonhosted.org
+RUN pip config --global http.sslVerify false
 
 WORKDIR /app
 
