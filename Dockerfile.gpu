@@ -6,6 +6,7 @@ ENV POETRY_VENV=/app/.venv
 
 RUN export DEBIAN_FRONTEND=noninteractive \
     && apt-get -qq update \
+    && apt-get -qq upgrade \
     && apt-get -qq install --no-install-recommends \
     python${PYTHON_VERSION} \
     python${PYTHON_VERSION}-venv \
