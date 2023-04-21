@@ -34,7 +34,7 @@ COPY requirements2.txt ./
 
 # RUN poetry config virtualenvs.in-project true
 # RUN poetry install --no-root
-RUN $POETRY_VENV/bin/pip install -r requirements2.txt
+RUN $POETRY_VENV/bin/pip install -r requirements2.txt --extra-index-url https://download.pytorch.org/whl/cu117
 
 COPY . .
 COPY --from=swagger-ui /usr/share/nginx/html/swagger-ui.css swagger-ui-assets/swagger-ui.css
