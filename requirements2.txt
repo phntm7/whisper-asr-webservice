@@ -58,4 +58,3 @@ urllib3==1.26.15
 uvicorn==0.18.3
 watchfiles==0.19.0
 websockets==11.0.2
--e git+ssh://git@github.com/phntm7/whisper-asr-webservice.git@fac7ee8ca7b203fecccc99acc6178f1b2573a3d2#egg=whisper_asr_webservice
