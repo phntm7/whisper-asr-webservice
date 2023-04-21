@@ -28,8 +28,8 @@ ENV PATH="${PATH}:${POETRY_VENV}/bin"
 
 WORKDIR /app
 
-# COPY poetry.lock pyproject.toml ./
-COPY pyproject.toml ./
+COPY poetry.lock pyproject.toml ./
+# COPY pyproject.toml ./
 
 RUN poetry config virtualenvs.in-project true
 RUN poetry install --no-root
