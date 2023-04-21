@@ -30,10 +30,11 @@ WORKDIR /app
 
 # COPY poetry.lock pyproject.toml ./
 # COPY pyproject.toml ./
+COPY requirements2.txt ./
 
 # RUN poetry config virtualenvs.in-project true
 # RUN poetry install --no-root
-RUN $POETRY_VENV/bin/pip install -r requirements.txt
+RUN $POETRY_VENV/bin/pip install -r requirements2.txt
 
 COPY . .
 COPY --from=swagger-ui /usr/share/nginx/html/swagger-ui.css swagger-ui-assets/swagger-ui.css
