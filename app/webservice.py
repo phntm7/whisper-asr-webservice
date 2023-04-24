@@ -24,24 +24,26 @@ import numpy as np
 from io import StringIO
 from threading import Lock
 import torch
-import importlib.metadata 
+import importlib.metadata
 
 SAMPLE_RATE=16000
 LANGUAGE_CODES=sorted(list(tokenizer.LANGUAGES.keys()))
 
-projectMetadata = importlib.metadata.metadata('whisper-asr-webservice')
+# projectMetadata = importlib.metadata.metadata('whisper-asr-webservice')
 app = FastAPI(
-    title=projectMetadata['Name'].title().replace('-', ' '),
-    description=projectMetadata['Summary'],
-    version=projectMetadata['Version'],
-    contact={
-        "url": projectMetadata['Home-page']
-    },
+    # title=projectMetadata['Name'].title().replace('-', ' '),
+    # description=projectMetadata['Summary'],
+    # version=projectMetadata['Version'],
+    # contact={
+    #     "url": projectMetadata['Home-page']
+    # },
+    # license_info={
+    #     "name": "MIT License",
+    #     "url": projectMetadata['License']
+    # }
+    title="Whisper ASR Webservice",
+    description="A webservice for Whisper ASR",
     swagger_ui_parameters={"defaultModelsExpandDepth": -1},
-    license_info={
-        "name": "MIT License",
-        "url": projectMetadata['License']
-    }
 )
 
 assets_path = os.getcwd() + "/swagger-ui-assets"
@@ -111,19 +113,19 @@ def language_detection(
     return result
 
 def run_asr(
-    file: BinaryIO, 
-    task: Union[str, None], 
+    file: BinaryIO,
+    task: Union[str, None],
     language: Union[str, None],
-    initial_prompt: Union[str, None], 
+    initial_prompt: Union[str, None],
     encode=True
 ):
     audio = load_audio(file, encode)
     options_dict = {"task" : task}
     if language:
-        options_dict["language"] = language    
+        options_dict["language"] = language
     if initial_prompt:
-        options_dict["initial_prompt"] = initial_prompt    
-    with model_lock:   
+        options_dict["initial_prompt"] = initial_prompt
+    with model_lock:
         model = get_model()
         segments = []
         text = ""
