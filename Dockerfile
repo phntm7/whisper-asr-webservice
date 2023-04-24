@@ -2,7 +2,7 @@ FROM swaggerapi/swagger-ui:v4.18.2 AS swagger-ui
 FROM nvidia/cuda:11.7.0-base-ubuntu22.04
 
 ENV PYTHON_VERSION=3.10
-ENV POETRY_VENV=/app/.venv
+ENV VENV=/app/.venv
 
 RUN update-ca-certificates --fresh
 
@@ -10,6 +10,9 @@ RUN export DEBIAN_FRONTEND=noninteractive \
     && apt-get -qq update \
     && apt-get -qq upgrade \
     && apt-get -qq install --no-install-recommends \
+    build-essential \
+    llvm \
+    llvm-dev \
     python${PYTHON_VERSION} \
     python${PYTHON_VERSION}-venv \
     python3-pip \
@@ -20,11 +23,11 @@ RUN ln -s -f /usr/bin/python${PYTHON_VERSION} /usr/bin/python3 && \
     ln -s -f /usr/bin/python${PYTHON_VERSION} /usr/bin/python && \
     ln -s -f /usr/bin/pip3 /usr/bin/pip
 
-RUN python3 -m venv $POETRY_VENV \
+RUN python3 -m venv $VENV \
     && $POETRY_VENV/bin/pip install -U pip setuptools # \
     # && $POETRY_VENV/bin/pip install poetry==1.4.2
 
-ENV PATH="${PATH}:${POETRY_VENV}/bin"
+ENV PATH="${PATH}:${VENV}/bin"
 
 # RUN pip config set global.trusted-host \
 #         "pypi.org files.pythonhosted.org pypi.python.org" \
@@ -42,15 +45,15 @@ COPY requirements.txt ./
 # RUN poetry config virtualenvs.in-project true
 # RUN poetry install --no-root
 RUN --mount=type=cache,target=/root/.cache/pip \
-    $POETRY_VENV/bin/pip install -r requirements.txt --retries 20 -v --extra-index-url https://download.pytorch.org/whl/cu117
+    $VENV/bin/pip install -r requirements.txt --retries 20 -v --extra-index-url https://download.pytorch.org/whl/cu117
 
 COPY . .
 COPY --from=swagger-ui /usr/share/nginx/html/swagger-ui.css swagger-ui-assets/swagger-ui.css
 COPY --from=swagger-ui /usr/share/nginx/html/swagger-ui-bundle.js swagger-ui-assets/swagger-ui-bundle.js
 
 # RUN poetry install
-RUN $POETRY_VENV/bin/pip install torch==1.13.0+cu117 --retries 20 -f https://download.pytorch.org/whl/torch
+# RUN $VENV/bin/pip install torch==1.13.0+cu117 --retries 20 -f https://download.pytorch.org/whl/torch
 
 # RUN pip install --retries 20 .
 
-CMD $POETRY_VENV/bin/gunicorn --bind 0.0.0.0:9000 --workers 1 --timeout 0 app.webservice:app -k uvicorn.workers.UvicornWorker
+CMD $VENV/bin/gunicorn --bind 0.0.0.0:9000 --workers 1 --timeout 0 app.webservice:app -k uvicorn.workers.UvicornWorker
