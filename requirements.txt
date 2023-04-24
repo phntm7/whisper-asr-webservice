@@ -3,8 +3,7 @@ fastapi==0.95.1
 faster-whisper==0.4.1
 ffmpeg-python==0.2.0
 gunicorn==20.1.0
-numpy==1.24.3
+numpy~=1.23.5
 openai-whisper==20230314
-python-dotenv==1.0.0
 torch==1.13.0+cu117; sys_platform == "linux"
 torch==1.13.0; sys_platform == "darwin"
