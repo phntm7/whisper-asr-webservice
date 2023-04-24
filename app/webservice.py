@@ -23,10 +23,11 @@ import numpy as np
 from io import StringIO
 from threading import Lock
 import torch
+
 # import importlib.metadata
 
-SAMPLE_RATE=16000
-LANGUAGE_CODES=sorted(list(tokenizer.LANGUAGES.keys()))
+SAMPLE_RATE = 16000
+LANGUAGE_CODES = sorted(list(tokenizer.LANGUAGES.keys()))
 
 # projectMetadata = importlib.metadata.metadata('whisper-asr-webservice')
 app = FastAPI(
@@ -48,6 +49,8 @@ app = FastAPI(
 assets_path = os.getcwd() + "/swagger-ui-assets"
 if path.exists(assets_path + "/swagger-ui.css") and path.exists(assets_path + "/swagger-ui-bundle.js"):
     app.mount("/assets", StaticFiles(directory=assets_path), name="static")
+
+
     def swagger_monkey_patch(*args, **kwargs):
         return get_swagger_ui_html(
             *args,
@@ -56,9 +59,11 @@ if path.exists(assets_path + "/swagger-ui.css") and path.exists(assets_path + "/
             swagger_css_url="/assets/swagger-ui.css",
             swagger_js_url="/assets/swagger-ui-bundle.js",
         )
+
+
     applications.get_swagger_ui_html = swagger_monkey_patch
 
-whisper_model_name= os.getenv("ASR_MODEL", "base")
+whisper_model_name = os.getenv("ASR_MODEL", "base")
 faster_whisper_model_path = os.path.join("/root/.cache/faster_whisper", whisper_model_name)
 faster_whisper_model_converter(whisper_model_name, faster_whisper_model_path)
 
@@ -68,34 +73,38 @@ else:
     faster_whisper_model = WhisperModel(faster_whisper_model_path)
 model_lock = Lock()
 
+
 def get_model():
     return faster_whisper_model
+
 
 @app.get("/", response_class=RedirectResponse, include_in_schema=False)
 async def index():
     return "/docs"
 
+
 @app.post("/asr", tags=["Endpoints"])
 def transcribe(
-    task : Union[str, None] = Query(default="transcribe", enum=["transcribe", "translate"]),
-    language: Union[str, None] = Query(default=None, enum=LANGUAGE_CODES),
-    initial_prompt: Union[str, None] = Query(default=None),
-    audio_file: UploadFile = File(...),
-    encode : bool = Query(default=True, description="Encode audio first through ffmpeg"),
-    output : Union[str, None] = Query(default="txt", enum=["txt", "vtt", "srt", "tsv", "json"])
+        task: Union[str, None] = Query(default="transcribe", enum=["transcribe", "translate"]),
+        language: Union[str, None] = Query(default=None, enum=LANGUAGE_CODES),
+        initial_prompt: Union[str, None] = Query(default=None),
+        audio_file: UploadFile = File(...),
+        encode: bool = Query(default=True, description="Encode audio first through ffmpeg"),
+        output: Union[str, None] = Query(default="txt", enum=["txt", "vtt", "srt", "tsv", "json"])
 ):
-
     result = run_asr(audio_file.file, task, language, initial_prompt, encode)
     filename = audio_file.filename.split('.')[0]
     myFile = StringIO()
     write_result(result, myFile, output)
     myFile.seek(0)
-    return StreamingResponse(myFile, media_type="text/plain", headers={'Content-Disposition': f'attachment; filename="{filename}.{output}"'})
+    return StreamingResponse(myFile, media_type="text/plain",
+                             headers={'Content-Disposition': f'attachment; filename="{filename}.{output}"'})
+
 
 @app.post("/detect-language", tags=["Endpoints"])
 def language_detection(
-    audio_file: UploadFile = File(...),
-    encode : bool = Query(default=True, description="Encode audio first through ffmpeg")
+        audio_file: UploadFile = File(...),
+        encode: bool = Query(default=True, description="Encode audio first through ffmpeg")
 ):
     # load audio and pad/trim it to fit 30 seconds
     audio = load_audio(audio_file.file, encode)
@@ -107,19 +116,20 @@ def language_detection(
         segments, info = model.transcribe(audio, beam_size=5)
         detected_lang_code = info.language
 
-        result = { "detected_language": tokenizer.LANGUAGES[detected_lang_code], "language_code" : detected_lang_code }
+        result = {"detected_language": tokenizer.LANGUAGES[detected_lang_code], "language_code": detected_lang_code}
 
     return result
 
+
 def run_asr(
-    file: BinaryIO,
-    task: Union[str, None],
-    language: Union[str, None],
-    initial_prompt: Union[str, None],
-    encode=True
+        file: BinaryIO,
+        task: Union[str, None],
+        language: Union[str, None],
+        initial_prompt: Union[str, None],
+        encode=True
 ):
     audio = load_audio(file, encode)
-    options_dict = {"task" : task}
+    options_dict = {"task": task}
     if language:
         options_dict["language"] = language
     if initial_prompt:
@@ -141,21 +151,23 @@ def run_asr(
 
     return result
 
+
 def write_result(
-    result: dict, file: BinaryIO, output: Union[str, None]
+        result: dict, file: BinaryIO, output: Union[str, None]
 ):
-    if(output == "srt"):
-        faster_whisper_WriteSRT(ResultWriter).write_result(result, file = file)
-    elif(output == "vtt"):
-        faster_whisper_WriteVTT(ResultWriter).write_result(result, file = file)
-    elif(output == "tsv"):
-        faster_whisper_WriteTSV(ResultWriter).write_result(result, file = file)
-    elif(output == "json"):
-        faster_whisper_WriteJSON(ResultWriter).write_result(result, file = file)
-    elif(output == "txt"):
-        faster_whisper_WriteTXT(ResultWriter).write_result(result, file = file)
+    if (output == "srt"):
+        faster_whisper_WriteSRT(ResultWriter).write_result(result, file=file)
+    elif (output == "vtt"):
+        faster_whisper_WriteVTT(ResultWriter).write_result(result, file=file)
+    elif (output == "tsv"):
+        faster_whisper_WriteTSV(ResultWriter).write_result(result, file=file)
+    elif (output == "json"):
+        faster_whisper_WriteJSON(ResultWriter).write_result(result, file=file)
+    elif (output == "txt"):
+        faster_whisper_WriteTXT(ResultWriter).write_result(result, file=file)
     else:
         return 'Please select an output format!'
+
 
 def load_audio(file: BinaryIO, encode=True, sr: int = SAMPLE_RATE):
     """
