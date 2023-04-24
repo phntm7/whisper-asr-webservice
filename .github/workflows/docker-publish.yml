@@ -1,7 +1,7 @@
 name: Publish Docker Image
 on:
   push:
-    tags:        
+    tags:
       - '*'
 
 env:
@@ -14,9 +14,9 @@ jobs:
     strategy:
       matrix:
         include:
+#          - docker_file: Dockerfile.cpu
+#            platforms: linux/arm64,linux/amd64
           - docker_file: Dockerfile
-            platforms: linux/arm64,linux/amd64
-          - docker_file: Dockerfile.gpu
             tag_extension: -gpu
             platforms: linux/amd64
     steps:

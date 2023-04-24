@@ -6,7 +6,7 @@ import whisper
 from whisper.utils import ResultWriter, WriteTXT, WriteSRT, WriteVTT, WriteTSV, WriteJSON
 from whisper import tokenizer
 from faster_whisper import WhisperModel
-from .faster_whisper.utils import (
+from .fw.utils import (
     model_converter as faster_whisper_model_converter,
     ResultWriter as faster_whisper_ResultWriter,
     WriteTXT as faster_whisper_WriteTXT,

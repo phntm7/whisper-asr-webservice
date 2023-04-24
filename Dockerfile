@@ -37,12 +37,12 @@ WORKDIR /app
 
 # COPY poetry.lock pyproject.toml ./
 # COPY pyproject.toml ./
-COPY requirements-new.txt ./
+COPY requirements.txt ./
 
 # RUN poetry config virtualenvs.in-project true
 # RUN poetry install --no-root
 RUN --mount=type=cache,target=/root/.cache/pip \
-    $POETRY_VENV/bin/pip install -r requirements-new.txt --retries 20 -v --extra-index-url https://download.pytorch.org/whl/cu117
+    $POETRY_VENV/bin/pip install -r requirements.txt --retries 20 -v --extra-index-url https://download.pytorch.org/whl/cu117
 
 COPY . .
 COPY --from=swagger-ui /usr/share/nginx/html/swagger-ui.css swagger-ui-assets/swagger-ui.css
