@@ -33,6 +33,7 @@ SAMPLE_RATE = 16000
 LANGUAGE_CODES = sorted(list(tokenizer.LANGUAGES.keys()))
 
 CACHE_PATH = os.environ.get('CACHE_PATH', '/root/.cache/')
+MODEL = os.environ.get("ASR_MODEL", "large-v2")
 
 # projectMetadata = importlib.metadata.metadata('whisper-asr-webservice')
 app = FastAPI(
@@ -68,10 +69,9 @@ if path.exists(assets_path + "/swagger-ui.css") and path.exists(assets_path + "/
 
     applications.get_swagger_ui_html = swagger_monkey_patch
 
-whisper_model_name = os.getenv("ASR_MODEL", "base")
-faster_whisper_model_path = os.path.join(CACHE_PATH, "faster_whisper", whisper_model_name)
+faster_whisper_model_path = os.path.join(CACHE_PATH, "faster_whisper", MODEL)
 print(faster_whisper_model_path)
-faster_whisper_model_converter(whisper_model_name, faster_whisper_model_path)
+faster_whisper_model_converter(MODEL, faster_whisper_model_path)
 
 if torch.cuda.is_available():
     faster_whisper_model = WhisperModel(faster_whisper_model_path, device="cuda", compute_type="float16")
