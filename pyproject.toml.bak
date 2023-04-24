@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "whisper-asr-webservice"
+name = "whisper-asr-webservice-vs-fork"
 version = "1.1.0"
 description = "Whisper ASR Webservice is a general-purpose speech recognition webservice."
 homepage  = "https://github.com/ahmetoner/whisper-asr-webservice/"
