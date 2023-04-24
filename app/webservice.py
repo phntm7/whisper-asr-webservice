@@ -23,11 +23,16 @@ import numpy as np
 from io import StringIO
 from threading import Lock
 import torch
+from dotenv import load_dotenv
+
+load_dotenv()  # take environment variables from .env.
 
 # import importlib.metadata
 
 SAMPLE_RATE = 16000
 LANGUAGE_CODES = sorted(list(tokenizer.LANGUAGES.keys()))
+
+CACHE_PATH = os.environ.get('CACHE_PATH', '/root/.cache/')
 
 # projectMetadata = importlib.metadata.metadata('whisper-asr-webservice')
 app = FastAPI(
@@ -64,7 +69,8 @@ if path.exists(assets_path + "/swagger-ui.css") and path.exists(assets_path + "/
     applications.get_swagger_ui_html = swagger_monkey_patch
 
 whisper_model_name = os.getenv("ASR_MODEL", "base")
-faster_whisper_model_path = os.path.join("/root/.cache/faster_whisper", whisper_model_name)
+faster_whisper_model_path = os.path.join(CACHE_PATH, "faster_whisper", whisper_model_name)
+print(faster_whisper_model_path)
 faster_whisper_model_converter(whisper_model_name, faster_whisper_model_path)
 
 if torch.cuda.is_available():

@@ -8,6 +8,7 @@ numba==0.56.4
 numpy~=1.23.5
 openai-whisper==20230314
 python-dotenv~=1.0.0
+python-multipart~=0.0.6
 tiktoken~=0.3.1
 torch==1.13.0+cu117; sys_platform == "linux"
 torch==1.13.0; sys_platform == "darwin"
