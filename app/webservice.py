@@ -24,7 +24,7 @@ import numpy as np
 from io import StringIO
 from threading import Lock
 import torch
-import importlib.metadata
+# import importlib.metadata
 
 SAMPLE_RATE=16000
 LANGUAGE_CODES=sorted(list(tokenizer.LANGUAGES.keys()))
