@@ -56,5 +56,5 @@ COPY --from=swagger-ui /usr/share/nginx/html/swagger-ui-bundle.js swagger-ui-ass
 
 # RUN pip install --retries 20 .
 
-# CMD $VENV/bin/gunicorn --bind 0.0.0.0:9000 --log-level=debug --workers 1 --timeout 0 app.webservice:app -k uvicorn.workers.UvicornWorker
-CMD $VENV/bin/uvicorn --port 9000 --host 0.0.0.0 --log-level debug app.webservice:app
+CMD $VENV/bin/gunicorn --bind 0.0.0.0:9000 --log-level=debug --workers 1 --timeout 0 app.webservice:app -k uvicorn.workers.UvicornWorker
+# CMD $VENV/bin/uvicorn --port 9000 --host 0.0.0.0 --log-level debug app.webservice:app
