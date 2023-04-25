@@ -74,9 +74,9 @@ print(faster_whisper_model_path)
 faster_whisper_model_converter(MODEL, faster_whisper_model_path)
 
 if torch.cuda.is_available():
-    faster_whisper_model = WhisperModel(faster_whisper_model_path, device="cuda", compute_type="float16")
+    faster_whisper_model = WhisperModel(MODEL, device="cuda", compute_type="float16")
 else:
-    faster_whisper_model = WhisperModel(faster_whisper_model_path)
+    faster_whisper_model = WhisperModel(MODEL)
 model_lock = Lock()
 
 
